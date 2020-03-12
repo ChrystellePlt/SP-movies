@@ -1,3 +1,25 @@
-#index:
-#    path: /
-#    controller: App\Controller\DefaultController::index
+index:
+    path: /
+    controller: App\Controller\IndexController::index
+
+login:
+    path: /login
+    controller: App\Controller\IndexController::login
+
+home:
+    path: /home
+    controller: App\Controller\HomeController::index
+
+admin:
+    path: /admin
+    controller: App\Controller\AdminController::index
+
+connect_google:
+    path: /connect/google
+    controller: App\Controller\GoogleController::connectAction
+
+connect_google_check:
+    path: /connect/google/check
+    controller: App\Controller\GoogleController::connectCheckAction
+
+

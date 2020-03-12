@@ -5,15 +5,23 @@
         "php": "^7.2.5",
         "ext-ctype": "*",
         "ext-iconv": "*",
+        "doctrine/orm": "^2.7",
+        "knpuniversity/oauth2-client-bundle": "^1.33",
+        "league/oauth2-google": "^3.0",
         "overblog/graphql-bundle": "^0.13.1",
         "symfony/console": "5.0.*",
         "symfony/dotenv": "5.0.*",
         "symfony/flex": "^1.6",
         "symfony/framework-bundle": "5.0.*",
+        "symfony/http-foundation": "5.0.*",
+        "symfony/maker-bundle": "^1.14",
+        "symfony/orm-pack": "^1.0",
         "symfony/property-access": "5.0.*",
+        "symfony/security-bundle": "5.0.*",
         "symfony/yaml": "5.0.*"
     },
     "require-dev": {
+        "overblog/graphiql-bundle": "^0.2.1",
         "symfony/profiler-pack": "^1.0"
     },
     "config": {
