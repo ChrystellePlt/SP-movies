@@ -14,6 +14,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 use Symfony\Component\Security\Core\Exception\AuthenticationException;
+use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Core\User\UserProviderInterface;
 
 class GoogleAuthenticator extends SocialAuthenticator
@@ -55,13 +56,12 @@ class GoogleAuthenticator extends SocialAuthenticator
     /**
      * @param Request $request
      *
-     * @return \League\OAuth2\Client\Token\AccessToken|mixed
+     * @return array|\League\OAuth2\Client\Token\AccessToken|mixed
      */
     public function getCredentials(Request $request)
     {
-        // if user logs via login form
         if ($request->isMethod('POST')) {
-            dump($request->request->all());die;
+            return $request->request->all()['login'];
         };
 
         // this method is only called if supports() returns true
@@ -88,31 +88,62 @@ class GoogleAuthenticator extends SocialAuthenticator
         /** @var UserRepository $repository */
         $repository = $this->manager->getRepository(User::class);
 
-        /** @var GoogleUser $googleUser */
-        $googleUser = $this->getGoogleClient()->fetchUserFromToken($credentials);
+        if (is_array($credentials)) {
+            /** @var User $user */
+            $user = $repository->findOneBy(['email' => $credentials['email']]);
 
-        /** @var User $existingUser */
-        $existingUser = $repository->findOneBy(['googleId' => $googleUser->getId()]);
+            // check if user exists
+            if ($user) {
+                // if user exists, check his credentials
+                if ($this->checkCredentials($credentials, $user)) {
 
-        // check if user has logged in with Google before
-        if ($existingUser) {
-            $user = $existingUser;
+                    return $user;
+                }
+            }
+
+            return null;
+
         } else {
-            // as user has never logged in before, we create a new one
-            $user = new User();
-            $user->setEmail($googleUser->getEmail());
-            $user->setGoogleId($googleUser->getId());
-            $user->setUsername($googleUser->getName());
-            // set random password
-            $plainPassword = random_bytes(10);
-            $password = $this->encoder->encodePassword($user, $plainPassword);
-            $user->setPassword($password);
+            /** @var GoogleUser $googleUser */
+            $googleUser = $this->getGoogleClient()->fetchUserFromToken($credentials);
 
-            $this->manager->persist($user);
-            $this->manager->flush();
+            /** @var User $existingUser */
+            $user = $repository->findOneBy(['googleId' => $googleUser->getId()]);
+
+            // check if user has logged in with Google before
+            if (!$user) {
+                // as user has never logged in before, we create a new one
+                $user = new User();
+                $user->setEmail($googleUser->getEmail());
+                $user->setGoogleId($googleUser->getId());
+                $user->setUsername($googleUser->getName());
+                // set random password
+                $plainPassword = random_bytes(10);
+                $password = $this->encoder->encodePassword($user, $plainPassword);
+                $user->setPassword($password);
+
+                $this->manager->persist($user);
+                $this->manager->flush();
+            }
         }
 
         return $repository->findOneBy(['email' => $user->getEmail()]);
+    }
+
+    /**
+     * @param               $credentials
+     * @param UserInterface $user
+     *
+     * @return bool
+     */
+    public function checkCredentials($credentials, UserInterface $user): bool
+    {
+        if (!$user->getGoogleId()) {
+            // check if the given password matches the password stored in the database
+            return $this->encoder->isPasswordValid($user, $credentials['password']);
+        }
+
+        return true;
     }
 
     /**

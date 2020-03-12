@@ -1,3 +1,7 @@
-<a href="{{ path('connect_google') }}">
-    Connect with Google
-</a>
+{% extends 'base.html.twig' %}
+{% block title %}Login{% endblock %}
+{% block body %}
+    <h1>LOGIN:</h1>
+    {{ form(form, {'action': path('connect_google_check')}) }}
+    Or <a href="{{ path('connect_google') }}">Connect with Google</a>
+{% endblock %}
